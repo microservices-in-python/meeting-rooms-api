@@ -1,0 +1,2061 @@
+openapi: 3.0.0
+info:
+  title: Meeting Rooms API
+  version: '1.0'
+  description: 'Meeting Rooms Management & Scheduling'
+  contact:
+    name: API Support
+    url: 'https://support.example.com/apis'
+    email: support-apis@example.com
+  termsOfService: 'https://example.com/terms'
+  license:
+    name: Creative Commons 4.0
+    url: 'https://creativecommons.org/licenses/by/4.0/'
+tags:
+  - name: rooms
+    description: Operations related to Conference Rooms
+  - name: equipment
+    description: Operations related to AV and Network Equipment
+  - name: meetings
+    description: Operations related to Meetings
+servers:
+  - url: 'http://localhost:5000'
+    description: Development Server
+paths:
+  /rooms:
+    get:
+      summary: List Conference Rooms
+      tags:
+        - rooms
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: '#/components/schemas/ConferenceRoom'
+        '400':
+          description: Bad Request - Error in Query String filters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-rooms
+      description: "List all Conference Rooms available at Example Inc. \nURL Query Parameters allow Filtering of this Collection, as well as Pagination and Sorting."
+      parameters:
+        - schema:
+            type: string
+            example: Vienna
+          in: query
+          name: name
+          description: Comma separated list of Room Names
+        - schema:
+            type: string
+            example: Boardroom
+          in: query
+          name: layout
+          description: 'Comma separated list of Room layouts. Choices are: Theatre, Classroom, Boardroom'
+        - schema:
+            type: integer
+            example: 25
+            minimum: 0
+          in: query
+          name: size.lte
+          description: Filter Rooms with size (in sq meters) less than or equal
+        - schema:
+            type: integer
+            example: 25
+            minimum: 0
+          in: query
+          name: size.gte
+          description: Filter Rooms with size (in sq meters) greater than or equal
+        - schema:
+            type: integer
+            example: 12
+            minimum: 0
+          in: query
+          name: seats
+          description: Filter rooms with exact number of seats
+        - schema:
+            type: integer
+            example: 12
+            minimum: 0
+          in: query
+          name: seats.lte
+          description: Filter Rooms with number of seats less then or equal
+        - schema:
+            type: integer
+            example: 12
+            minimum: 0
+          in: query
+          name: seats.gte
+          description: Filter Rooms with number of seats greater then or equal
+        - schema:
+            type: string
+            example: 'LCDdisplay,WiFi'
+          in: query
+          name: equipment
+          description: 'Comma separated list of Equipment available in Room. All listed items must be available. Choices are: LAN, GuestWiFi, InternalWifi, LCDdisplay, Projector, Screen.'
+        - schema:
+            type: integer
+            default: 0
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+            example: 'id,name,size,layout,location'
+          in: query
+          name: fields
+          description: Comma separated list of ConferenceRoom Data Model attribute names to include in Response list. Resource URI (href) is always included
+        - schema:
+            type: string
+            example: '+seats,-size'
+          in: query
+          name: sortBy
+          description: Comma separated list of attribute names to use in sorting the list. Use - (minus) prefix for descending order and optional + for ascending
+    post:
+      summary: Add new Conference Room
+      operationId: post-rooms
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: New Resource URI
+              required: true
+        '400':
+          description: Bad Request - invalid or incorrect Request Body data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: 'Create a new Conference Room Resource. Use `/rooms/{id}/equipment` to manage Display and Network Equipment available in the Room.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConferenceRoomMutableAttributes'
+        description: All attributes are required.
+      tags:
+        - rooms
+  '/rooms/{roomid}':
+    parameters:
+      - schema:
+          type: string
+        name: roomid
+        in: path
+        required: true
+        description: Unique ID of a Resource
+    get:
+      summary: Retrieve Conference Room Resource representation
+      tags:
+        - rooms
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConferenceRoom'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-rooms-id
+      description: Returns Conference Room Resource as JSON object.
+    patch:
+      summary: Update Conference Room
+      operationId: patch-rooms-id
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid Request Body data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: |
+        Update Conference Room Resource using JSON Object in Request Body.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConferenceRoomMutableAttributes'
+        description: Any subset of ConferenceRoomMutableAttributes Data Model is allowed.
+      tags:
+        - rooms
+    delete:
+      summary: Delete Conference Room
+      operationId: delete-rooms-id
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Permanently delete Conference Room Resource.
+      tags:
+        - rooms
+  /equipment:
+    get:
+      summary: List all items of all classes of Equipment
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/LCDdisplay'
+                    - $ref: '#/components/schemas/Projector'
+                    - $ref: '#/components/schemas/Screen'
+                    - $ref: '#/components/schemas/LAN'
+                    - $ref: '#/components/schemas/WiFi'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment
+      description: List Resources of all classes of Equipment. Pagination is supported.
+      parameters:
+        - schema:
+            type: integer
+            default: 0
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+            example: '123'
+          in: query
+          name: room
+          description: Filter Meeting scheduled in Conference Room with this ID
+  /equipment/lans:
+    get:
+      summary: List LAN Resources
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LAN'
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+          description: Unauthorized
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-lans
+      description: Retrieve a JSON formatted list of LAN Resources
+      parameters:
+        - schema:
+            type: integer
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+          in: query
+          name: fields
+          description: Comma separated list of LAN Data Model attribute names to include in Response list
+        - schema:
+            type: string
+          in: query
+          name: sortBy
+          description: Comma separated list of attribute names to use in sorting the list. Use - (minus) prefix for descending order and optional + for ascending
+    post:
+      summary: Create LAN Resource
+      operationId: post-equipment-lans
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URI of new Resource
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LANMutableAttributes'
+      description: Create new LAN Resource
+      tags:
+        - equipment
+  '/equipment/lans/{lanid}':
+    parameters:
+      - schema:
+          type: string
+        name: lanid
+        in: path
+        required: true
+        description: Unique ID of Resource
+    get:
+      summary: Retrieve LAN Resource representation
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LAN'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-lans-lanid
+      description: Read LAN Resource representation in JSON format
+    patch:
+      summary: Update LAN Resource
+      operationId: patch-equipment-lans-lanid
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Update LAN Resource representation.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LANMutableAttributes'
+      tags:
+        - equipment
+    delete:
+      summary: Delete LAN Resource
+      operationId: delete-equipment-lans-lanid
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      description: Permanently delete LAN Resource
+      tags:
+        - equipment
+  /equipment/wifis:
+    get:
+      summary: List WiFi Resources
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WiFi'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-wifis
+      description: Retrieve a JSON formatted list of WiFi Resources
+      parameters:
+        - schema:
+            type: integer
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+          in: query
+          name: fields
+          description: Comma separated list of WiFi Data Model attribute names to include in Response list
+        - schema:
+            type: string
+          in: query
+          name: sortBy
+          description: Comma separated list of attribute names to use in sorting the list. Use - (minus) prefix for descending order and optional + for ascending
+    post:
+      summary: Create WiFi Resource
+      operationId: post-equipment-wifis
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URI of new Resource
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Create new WiFi Resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiMutableAttributes'
+      tags:
+        - equipment
+  '/equipment/wifis/{wifiid}':
+    parameters:
+      - schema:
+          type: string
+        name: wifiid
+        in: path
+        required: true
+        description: Unique ID of Resource
+    get:
+      summary: Retrieve WiFi Resource representation
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WiFi'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-wifis-wifiid
+      description: Read WiFi Resource representation in JSON format
+    patch:
+      summary: Update WiFi Resource
+      operationId: patch-equipment-wifis-wifiid
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request body
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '415':
+          description: Unsupported Media Type
+      description: Update WiFi Resource representation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WiFiMutableAttributes'
+      tags:
+        - equipment
+    delete:
+      summary: Delete WiFi Resource
+      operationId: delete-equipment-wifis-wifiid
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      description: Permanently delete WiFi Resource
+      tags:
+        - equipment
+  /equipment/lcd-displays:
+    get:
+      summary: List LCDdisplay Resources
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LCDdisplay'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-lcd-displays
+      description: Retrieve a JSON formatted list of LCDdisplay Resources
+      parameters:
+        - schema:
+            type: integer
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+          in: query
+          name: fields
+          description: Comma separated list of LCDdisplay Data Model attribute names to include in Response list
+        - schema:
+            type: string
+          in: query
+          name: sortBy
+          description: Comma separated list of attribute names to use in sorting the list. Use - (minus) prefix for descending order and optional + for ascending
+    post:
+      summary: Create LCDdisplay Resource
+      operationId: post-equipment-lcd-displays
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URI of new Resource
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LCDdisplayMutableAttributes'
+      description: Create new LCDdisplay Resource
+      tags:
+        - equipment
+  '/equipment/lcd-displays/{lcdid}':
+    parameters:
+      - schema:
+          type: string
+        name: lcdid
+        in: path
+        required: true
+        description: Unique ID of Resource
+    get:
+      summary: Retrieve LCDdisplay Resource representation
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LCDdisplay'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-lcd-displays-lcdid
+      description: Read LCDdisplay Resource representation in JSON format
+    patch:
+      summary: Update LCDdisplay Resource
+      operationId: patch-equipment-lcd-displays-lcdid
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Update LCDdisplay Resource representation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LCDdisplayMutableAttributes'
+      tags:
+        - equipment
+    delete:
+      summary: Delete LCDdisplay Resource
+      operationId: delete-equipment-lcd-displays-lcdid
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Permanently delete LCDdisplay Resource
+      tags:
+        - equipment
+  /equipment/projectors:
+    get:
+      summary: List Projectors Resources
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Projector'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-projectors
+      description: Retrieve a JSON formatted list of Projector Resources
+      parameters:
+        - schema:
+            type: integer
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+          in: query
+          name: fields
+          description: Comma separated list of Projector Data Model attribute names to include in Response list
+        - schema:
+            type: string
+          in: query
+          name: sortBy
+          description: Comma separated list of attribute names to use in sorting the list. Use - (minus) prefix for descending order and optional + for ascending
+    post:
+      summary: Create Projector Resource
+      operationId: post-equipment-projectors
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URI of new Resource
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Create new Projector Resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectorMutableAttributes'
+      tags:
+        - equipment
+  '/equipment/projectors/{projectorid}':
+    parameters:
+      - schema:
+          type: string
+        name: projectorid
+        in: path
+        required: true
+        description: Unique ID of Resource
+    get:
+      summary: Retrieve Projector Resource representation
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Projector'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-projectors-projectorid
+      description: Read Projector Resource representation in JSON format
+    patch:
+      summary: Update Projector Resource
+      operationId: patch-equipment-projector-projectorid
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Update Projector Resource representation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectorMutableAttributes'
+      tags:
+        - equipment
+    delete:
+      summary: Delete Projector Resource
+      operationId: delete-equipment-projectors-projectorid
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Permanently delete Projector Resource
+      tags:
+        - equipment
+  /equipment/screens:
+    get:
+      summary: List Screen Resources
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Screen'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-screens
+      description: Retrieve a JSON formatted list of Screen Resources
+      parameters:
+        - schema:
+            type: integer
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+          in: query
+          name: fields
+          description: Comma separated list of Screen Data Model attribute names to include in Response list
+        - schema:
+            type: string
+          in: query
+          name: sortBy
+          description: Comma separated list of attribute names to use in sorting the list. Use - (minus) prefix for descending order and optional + for ascending
+    post:
+      summary: Create Screen Resource
+      operationId: post-equipment-screens
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URI of new Resource
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Create new Screen Resource
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenMutableAttributes'
+      tags:
+        - equipment
+  '/equipment/screens/{screenid}':
+    parameters:
+      - schema:
+          type: string
+        name: screenid
+        in: path
+        required: true
+        description: Unique ID of Resource
+    get:
+      summary: Retrieve Screen Resource representation
+      tags:
+        - equipment
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Screen'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-equipment-screens-screensid
+      description: Read Screen Resource representation in JSON format
+    patch:
+      summary: Update Screen Resource
+      operationId: patch-equipment-screens-screenid
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request body
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '415':
+          description: Unsupported Media Type
+      description: Update Screen Resource representation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenMutableAttributes'
+      tags:
+        - equipment
+    delete:
+      summary: Delete Screen Resource
+      operationId: delete-equipment-screens-screenid
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+      description: Permanently delete Screen Resource
+      tags:
+        - equipment
+  '/rooms/{roomid}/equipment/install':
+    parameters:
+      - schema:
+          type: string
+        name: roomid
+        in: path
+        required: true
+        description: Unique ID of Resource
+    post:
+      summary: Add Equipment to Room (Controller-type Resource)
+      operationId: post-rooms-roomid-equipment-install
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Add existing Equipment Resource to this Room
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                equipment:
+                  type: string
+                  description: URI of Equipment Resource
+      tags:
+        - rooms
+        - equipment
+  '/rooms/{roomid}/equipment/remove':
+    parameters:
+      - schema:
+          type: string
+        name: roomid
+        in: path
+        required: true
+        description: Unique ID of Resource
+    post:
+      summary: Remove Equipment from Room (Controller-type Resource)
+      operationId: post-rooms-roomid-equipment-remove
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Remove (uninstall) Equipment from this Room
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                equipment:
+                  type: string
+                  description: URI of Equipment Resource
+      tags:
+        - rooms
+        - equipment
+  /meetings:
+    get:
+      summary: List Meetings
+      tags:
+        - meetings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Meeting'
+        '400':
+          description: Bad Request - incorrect or invalid Query String parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-meetings
+      description: |-
+        Retrieve a list of Meeting Resources.
+        URL Query Parameters allow Filtering of this Collection, as well as Pagination and Sorting.
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: title
+          description: Filter by substring of Meeting Title
+        - schema:
+            type: string
+          in: query
+          name: owner.name
+          description: "Filter by substring of Meeting Owner's name"
+        - schema:
+            type: string
+          in: query
+          name: owner.email
+          description: "Filter by Meeting Owner's email"
+        - schema:
+            type: string
+            format: date-time
+            example: '2020-10-23T09:00:00Z'
+          in: query
+          name: start
+          description: Filter Meetings starting at this date-time or later
+        - schema:
+            type: string
+            format: date-time
+            example: '2020-10-23T18:00:00Z'
+          in: query
+          name: end
+          description: Filter Meetings ending at this date-time or earlier
+        - schema:
+            type: string
+            example: '123'
+          in: query
+          name: room
+          description: Filter Meeting scheduled in Conference Room with this ID
+        - schema:
+            type: integer
+            example: 100
+            minimum: 0
+          in: query
+          name: offset
+          description: Pagination parameter requesting to start listing at this position (starting with 0)
+        - schema:
+            type: integer
+            minimum: 0
+            example: 25
+          in: query
+          name: limit
+          description: Pagination parameter requesting to limit number of listed resources
+        - schema:
+            type: string
+          in: query
+          name: fields
+          description: Comma separated list of Meeting Data Model attribute names to include in Response list
+        - schema:
+            type: string
+          in: query
+          name: sortBy
+          description: Comma separated list of attribute names to use in sorting the list. Use - (minus) prefix for descending order and optional + for ascending
+    post:
+      summary: Create Meeting Resource
+      operationId: post-meetings
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URI of newly created Meeting
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '409':
+          description: Conflict with other Meeting already scheduled at this time in this Room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: 'Create (schedule) a new Meeting. Operation fails with Status Code 409, if there is an overlaping Meeting already scheduled in the Room.'
+      tags:
+        - meetings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeetingMutableAttributes'
+  '/meetings/{meetingid}':
+    parameters:
+      - schema:
+          type: string
+        name: meetingid
+        in: path
+        required: true
+        description: Unique ID of Meeting Resource
+    get:
+      summary: Retrieve Meeting Resource representation
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Meeting'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '406':
+          description: Not Acceptable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      operationId: get-meetings-meetingid
+      description: Read a representation of Meeting Resource
+    patch:
+      summary: Update Meeting Resource
+      operationId: patch-meetings-meetingid
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request - incorrect or invalid JSON Object in Request Body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '409':
+          description: Conflict with other Meeting already scheduled at this time in this Room
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '415':
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: 'Update (reschedule) a Meeting. Operation fails with Status Code 409, if there is an overlaping Meeting already scheduled in the Room.'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MeetingMutableAttributes'
+      tags:
+        - meetings
+    delete:
+      summary: Delete Meeting
+      operationId: delete-meetings-meetingid
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+      description: Delete a meeting and free time slot in Room calendar
+      tags:
+        - meetings
+components:
+  schemas:
+    ResourceSuperClass:
+      title: ResourceSuperClass
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique ID of a Resource
+          minLength: 1
+          example: '123'
+        kind:
+          type: string
+          minLength: 1
+          example: ConferenceRoom
+          description: Name of this Resource Class Type
+        links:
+          type: object
+          format: uri
+          description: Links to self and Resource relations
+          properties:
+            self:
+              type: string
+              description: URI of the Resource (self link)
+    ConferenceRoom:
+      title: Conference Room
+      description: Conference Room Resource Data Model. `kind` is `ConferenceRoom`
+      allOf:
+        - $ref: '#/components/schemas/ResourceSuperClass'
+        - $ref: '#/components/schemas/ConferenceRoomMutableAttributes'
+        - type: object
+          properties:
+            links:
+              type: object
+              properties:
+                equipment:
+                  type: string
+                  description: Get list of equipment installed in this Room
+                  format: uri
+                  example: 'http://api.host/equipment?room=7'
+                meetings:
+                  type: string
+                  description: 'Get list of meetings scheduled in this Room. Use optional Query String parameters &start={start}&end={end} to specify time period'
+                  format: uri
+                  example: 'http://api.host/meetings?room=7'
+    EquipmentSharedAttributes:
+      allOf:
+        - $ref: '#/components/schemas/ResourceSuperClass'
+        - type: object
+          properties:
+            links:
+              type: object
+              description: Room in which the Equipment is installed
+              properties:
+                room:
+                  type: string
+                  description: 'URI of Room, where Equipment is installed'
+                  format: uri
+      title: Equipment Shared Attributes
+    LCDdisplay:
+      title: LCDdisplay
+      allOf:
+        - $ref: '#/components/schemas/EquipmentSharedAttributes'
+        - $ref: '#/components/schemas/LCDdisplayMutableAttributes'
+      description: LCD Display Resouce Data Model. `kind` is `LCDdisplay`.
+    LCDdisplayMutableAttributes:
+      title: LCD Display Mutable Attributes
+      type: object
+      properties:
+        resolution:
+          type: string
+          enum:
+            - HD
+            - 4K
+            - 8K
+          example: 8K
+          description: 'Display resolution: HD, 4K or 8K'
+        size:
+          type: integer
+          example: 55
+          minimum: 0
+          description: Diagonal in inch
+        touchscreen:
+          type: boolean
+          description: Touchscreen feature (true or false)
+      description: All mutable attributes of LCD Display Resouce
+    ProjectorMutableAttributes:
+      title: Projector Resource Mutable Attributes
+      description: All mutable attribute of Projector Resource
+      type: object
+      properties:
+        resolution:
+          type: string
+          enum:
+            - HD
+            - 4K
+            - 8K
+          example: HD
+          description: 'Display resolution: HD, 4K or 8K'
+        connectivity:
+          type: string
+          example: 'HDMI,VGA,Wireless'
+          description: Available signal connection options
+    Projector:
+      title: Projector
+      description: Projector Resouce Data Model. `kind` is `Projector`.
+      allOf:
+        - $ref: '#/components/schemas/EquipmentSharedAttributes'
+        - $ref: '#/components/schemas/ProjectorMutableAttributes'
+    Screen:
+      title: Screen
+      description: Screen Resouce Data Model. `kind` is `Screen`.
+      allOf:
+        - $ref: '#/components/schemas/EquipmentSharedAttributes'
+        - $ref: '#/components/schemas/ScreenMutableAttributes'
+    ScreenMutableAttributes:
+      title: Screen Mutable Attributes
+      description: All mutable attributes of Screen Resouce
+      type: object
+      properties:
+        width:
+          type: string
+          description: Width of screen viewable area
+          example: 5 meters
+        height:
+          type: string
+          description: Height of screen viewable area
+          example: "3' 3\""
+        projection:
+          type: string
+          enum:
+            - front
+            - rear
+          example: front
+          description: Front or rear projection
+    LANMutableAttributes:
+      title: LAN Mutable Attributes
+      description: All mutable attributes of LAN Resouce.
+      type: object
+      properties:
+        portsNumber:
+          type: integer
+          minimum: 0
+          example: 16
+          description: Number of ports available in Room
+        portsType:
+          type: string
+          enum:
+            - RJ45
+            - LC
+          example: RJ45
+          description: 'Port Socket type: RJ45 or LC'
+        throughput:
+          type: integer
+          example: 1
+          minimum: 0
+          description: Network speed in Gbit/s
+    WiFi:
+      title: WiFi
+      description: Wireless Network Resouce Data Model. `kind` is `WiFi`.
+      allOf:
+        - $ref: '#/components/schemas/EquipmentSharedAttributes'
+        - $ref: '#/components/schemas/WiFiMutableAttributes'
+    ConferenceRoomMutableAttributes:
+      title: Conference Room Mutable Attributes
+      type: object
+      description: All mutable attributes of Conference Room Resource
+      properties:
+        name:
+          type: string
+          description: Unique Room name
+          example: Vienna
+          minLength: 1
+          maxLength: 20
+        size:
+          type: integer
+          description: Room size in square meters
+          example: 25
+          minimum: 0
+        seats:
+          type: integer
+          example: 12
+          minimum: 0
+          description: Number of seats in the Room
+        layout:
+          type: string
+          enum:
+            - Theatre
+            - Boardroom
+            - Classroom
+          example: Boardroom
+          description: Room Layout
+        location:
+          type: object
+          description: Full Room Location
+          properties:
+            building:
+              type: string
+              description: Building Name
+              example: Building B
+            floor:
+              type: string
+              description: Floor number
+              example: '2'
+            number:
+              type: string
+              description: Room number
+              example: '12'
+    LAN:
+      title: LAN
+      allOf:
+        - $ref: '#/components/schemas/EquipmentSharedAttributes'
+        - $ref: '#/components/schemas/LANMutableAttributes'
+      description: LAN Resource Data Model. `kind` is `LAN`.
+    WiFiMutableAttributes:
+      title: WiFi Mutable Attributes
+      type: object
+      description: All mutable attributes of WiFi Resource
+      properties:
+        ssid:
+          type: string
+          description: SSID of the Network
+          example: GuestNet
+        speed:
+          type: integer
+          description: Network speed in Mbits/s
+          example: 300
+          minimum: 0
+        accessibility:
+          type: string
+          enum:
+            - Guest
+            - Internal
+          example: Guest
+          description: Guest or Internal
+    MeetingMutableAttributes:
+      title: Meeting Mutable Attributes
+      type: object
+      properties:
+        title:
+          type: string
+          description: Meeting title
+          example: API Project Review
+          minLength: 1
+        owner:
+          type: object
+          description: Person or Team responsible for this meeting
+          properties:
+            name:
+              type: string
+              example: Kris
+              minLength: 1
+            phone:
+              type: string
+              example: 123-456-7890
+            email:
+              type: string
+              format: email
+              example: kris@example.com
+              minLength: 3
+        start:
+          type: string
+          format: date-time
+          description: Meeting start date-time
+          example: '2020-10-23T13:00:00Z'
+        end:
+          type: string
+          example: '2020-10-23T15:00:00Z'
+          format: date-time
+          description: Meeting end date-time
+        links:
+          type: object
+          properties:
+            room:
+              type: string
+              description: Room Resource URI (where Meeting is located)
+              format: uri
+              example: 'http://api.host/rooms/7'
+    Meeting:
+      title: Meeting
+      description: Meeting Resource Data Model. `kind` is `Meeting`
+      allOf:
+        - $ref: '#/components/schemas/ResourceSuperClass'
+        - $ref: '#/components/schemas/MeetingMutableAttributes'
+    GeneralError:
+      title: GeneralError
+      type: object
+      description: Data Model of Object returned in Error Responses
+      properties:
+        code:
+          type: string
+          description: Error code symbol. Please check Application documentation
+          example: B032
+        description:
+          type: string
+          example: Invalid JSON in Request Body
+        links:
+          type: object
+          properties:
+            documentation:
+              type: string
+              description: URL of API documentation relevant to this Error
+              format: uri
+            internationalMessages:
+              type: string
+              description: URL template to retrieve international Error Messages
+              example: 'http://api.example.com/errors?code=B032&lang={lang}'
+  securitySchemes:
+    JWT Bearer Token:
+      type: http
+      scheme: bearer
+      description: JSON Web Token includes User ID
+security:
+  - JWT Bearer Token: []
